@@ -11,60 +11,61 @@ from fpdf import FPDF
 st.set_page_config(page_title="ASES: Agri-Smart", layout="wide", page_icon="🌾")
 API_KEY = "44ce6d6e018ff31baf4081ed56eb7fb7"
 
-# --- 2. HIGH-CONTRAST UI STYLING ---
+# --- 2. ULTRA-HIGH VISIBILITY CSS ---
 st.markdown("""
     <style>
-    /* Main Background */
-    .stApp { background-color: #F0F2F5; }
-    
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #1B2631;
-        color: white;
+    /* Force high contrast for all text */
+    html, body, [class*="st-"] {
+        color: #000000 !important; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    [data-testid="stSidebar"] * { color: white !important; }
+    
+    /* Sidebar: Dark background with WHITE text for contrast */
+    [data-testid="stSidebar"] {
+        background-color: #0E1117 !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
 
-    /* High Visibility Cards */
+    /* Main Cards: White background with Black text */
     .main-card { 
         padding: 25px; 
-        border-radius: 12px; 
+        border-radius: 10px; 
         background-color: #FFFFFF; 
-        border-top: 6px solid #28B463;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1); 
-        margin-bottom: 25px;
-        color: #1C2833;
+        border: 2px solid #28B463; /* Green border for visibility */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+        margin-bottom: 20px;
+        color: #000000 !important;
     }
     
-    /* Weather Box */
+    /* Weather Widget: High contrast Blue */
     .weather-widget {
-        background: linear-gradient(135deg, #2E86C1 0%, #21618C 100%);
-        color: white !important; 
-        padding: 20px; 
-        border-radius: 10px; 
+        background-color: #1A5276;
+        color: #FFFFFF !important; 
+        padding: 15px; 
+        border-radius: 8px; 
         text-align: center;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        margin-bottom: 20px;
     }
 
-    /* Buttons & Badges */
-    .stButton>button {
-        background-color: #28B463; 
-        color: white !important; 
-        border-radius: 8px;
-        font-weight: bold;
-        border: none;
-        height: 3em;
-    }
+    /* Green Status Badges */
     .status-badge {
-        padding: 6px 15px; 
-        border-radius: 50px; 
-        font-weight: 800; 
-        background-color: #D4EFDF; 
-        color: #186A3B;
-        border: 1px solid #2ECC71;
+        padding: 5px 15px; 
+        border-radius: 4px; 
+        font-weight: bold; 
+        background-color: #28B463; 
+        color: #FFFFFF !important;
+        display: inline-block;
     }
-    h1, h2, h3 { color: #1B2631 !important; }
+
+    /* Headers */
+    h1, h2, h3 { color: #186A3B !important; font-weight: 800 !important; }
+    
+    /* Input Labels visibility */
+    label { color: #000000 !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -91,38 +92,37 @@ india_map = {
     "Uttar Pradesh": ["Lucknow", "Agra", "Varanasi"]
 }
 
-# --- 4. SIDEBAR NAVIGATION TABS ---
+# --- 4. SIDEBAR SECTIONS ---
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/en/5/52/Indian_Institute_of_Technology_Patna_Logo.png", width=120)
-    st.markdown("## ASES NAVIGATION")
-    tab_selection = st.radio("SELECT TAB:", 
-                            ["🌾 CROP ENGINE", "🛡️ RISK ANALYSIS", "📜 GOVT SCHEMES", "🚜 MARKETPLACE"])
+    st.markdown("### 🗺️ NAVIGATION")
+    tab_selection = st.radio("GO TO PAGE:", 
+                            ["🌾 Crop Recommendation", "🛡️ Environmental Risk", "📜 Government Schemes", "🚜 Rental Marketplace"])
     st.markdown("---")
-    st.caption("v2.1 | High Visibility Mode")
+    st.write("ASES System v3.0")
 
-# --- 5. PAGE LOGIC ---
+# --- 5. TAB LOGIC ---
 
-if tab_selection == "🌾 CROP ENGINE":
+if tab_selection == "🌾 Crop Recommendation":
     st.title("Crop Recommendation Engine")
     
-    with st.container():
-        st.markdown('<div class="main-card">', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1: u_state = st.selectbox("1. CHOOSE STATE", list(india_map.keys()))
-        with c2: u_dist = st.selectbox("2. CHOOSE DISTRICT", india_map[u_state])
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1: u_state = st.selectbox("STEP 1: SELECT STATE", list(india_map.keys()))
+    with c2: u_dist = st.selectbox("STEP 2: SELECT DISTRICT", india_map[u_state])
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Weather Widget
+    # Weather widget
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={u_dist},IN&appid={API_KEY}&units=metric"
         w_res = requests.get(url).json()
         temp, hum = w_res['main']['temp'], w_res['main']['humidity']
-        st.markdown(f'<div class="weather-widget">LIVE: {u_dist} is {temp}°C | {hum}% Humidity</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="weather-widget">CURRENT WEATHER: {temp}°C | {hum}% HUMIDITY</div>', unsafe_allow_html=True)
     except:
-        temp, hum = 27, 50
+        temp, hum = 28, 52
 
-    # Soil Selection
-    st.subheader("3. Identify Soil Type")
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+    st.write("### STEP 3: SELECT SOIL TYPE")
     soil_opts = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
     if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
     s_cols = st.columns(4)
@@ -130,75 +130,66 @@ if tab_selection == "🌾 CROP ENGINE":
         with s_cols[i]:
             if st.button(s, use_container_width=True): st.session_state.soil = s
     
-    st.markdown(f"ACTIVE SELECTION: <span class='status-badge'>{st.session_state.soil}</span>", unsafe_allow_html=True)
+    st.write(f"CURRENTLY SELECTED: **{st.session_state.soil}**")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Sliders
-    u_budget = st.slider("INVESTMENT BUDGET (₹/ACRE)", 5000, 50000, 15000)
+    u_budget = st.slider("INVESTMENT BUDGET (₹ PER ACRE)", 5000, 50000, 15000)
     u_month = st.slider("SOWING MONTH (1-12)", 1, 12, 6)
 
-    if st.button("🚀 ANALYZE NOW"):
-        progress_bar = st.progress(0)
-        for i in range(100):
-            time.sleep(0.005)
-            progress_bar.progress(i + 1)
-        
-        # KNN Logic
+    if st.button("🚀 GET AI RECOMMENDATION"):
+        # KNN Analysis
         X = df[['Soil_Idx', 'Sowing Month', 'Cost per Acre']]
         knn = NearestNeighbors(n_neighbors=2).fit(X)
         u_idx = le.transform([st.session_state.soil])[0]
         dist, idx = knn.kneighbors([[u_idx, u_month, u_budget]])
         recs = df.iloc[idx[0]]
         
-        
-        
-        st.subheader("TOP RECOMMENDATIONS")
+        st.write("### 🎯 TOP MATCHES FOR YOUR LAND")
         res_cols = st.columns(len(recs))
         for i, row in enumerate(recs.iterrows()):
             with res_cols[i]:
                 st.markdown(f"""
                 <div class="main-card">
-                    <h2 style="color:#186A3B;">{row[1]['Crop Name']}</h2>
-                    <p><b>Est. Cost:</b> ₹{row[1]['Cost per Acre']}</p>
-                    <p><b>Water:</b> {row[1]['Water Requirement']}mm</p>
-                    <span class="status-badge">AI MATCH: {99-i}%</span>
+                    <h2 style="color:#1D8348;">{row[1]['Crop Name']}</h2>
+                    <p><b>Estimated Cost:</b> ₹{row[1]['Cost per Acre']}</p>
+                    <p><b>Water Need:</b> {row[1]['Water Requirement']}mm</p>
+                    <div class="status-badge">AI MATCH: {99-i}%</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-elif tab_selection == "🛡️ RISK ANALYSIS":
-    st.title("Environmental Risk Assessment")
+elif tab_selection == "🛡️ Environmental Risk":
+    st.title("Risk Assessment")
     
-    
-
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     if 'hum' in locals() and hum > 70:
-        st.error(f"⚠️ DANGER: LOCAL HUMIDITY IS {hum}%")
-        st.write("Current conditions are highly favorable for **Fungal Infections** like Blight or Mildew.")
+        st.error(f"🚨 ALERT: HIGH HUMIDITY DETECTED ({hum}%)")
+        st.write("Fungal pathogens thrive in these conditions. Check for Blight or Mildew.")
         
     else:
-        st.success("✅ STABLE: CLIMATIC CONDITIONS ARE OPTIMAL")
-        st.write("Humidity levels are currently low. No immediate fungal alerts for your district.")
+        st.success(f"✅ SAFE: HUMIDITY IS {hum}%")
+        st.write("Climatic conditions are currently stable. No major fungal alerts.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-elif tab_selection == "📜 GOVT SCHEMES":
-    st.title("National Agricultural Schemes")
+elif tab_selection == "📜 Government Schemes":
+    st.title("Agricultural Schemes")
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     schemes = pd.DataFrame({
         "SCHEME NAME": ["PM-KISAN", "PMFBY", "SOIL HEALTH CARD"],
-        "BENEFIT": ["₹6,000 ANNUAL CASH", "CROP INSURANCE", "SOIL ANALYSIS REPORT"]
+        "OFFICIAL BENEFIT": ["₹6,000 Direct Payout", "Crop Insurance Cover", "Detailed Soil Lab Report"]
     })
     st.table(schemes)
     st.markdown('</div>', unsafe_allow_html=True)
 
-elif tab_selection == "🚜 MARKETPLACE":
-    st.title("Equipment Rental & Services")
+elif tab_selection == "🚜 Rental Marketplace":
+    st.title("Equipment Rental")
     st.markdown("""
     <div class="main-card" style="text-align:center;">
-        <h3>NEED MACHINERY?</h3>
-        <p>Contact the nearest verified rental service in your district.</p>
+        <h3>CONNECT WITH PROVIDERS</h3>
+        <p>Verified machinery owners available in your district.</p>
         <br>
         <a href="tel:9999911111" style="text-decoration:none;">
-            <button style="padding:15px 30px; background-color:#28B463; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; width:100%;">
-                📞 CALL RENTAL SERVICE
+            <button style="padding:15px 50px; background-color:#186A3B; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.2rem;">
+                📞 CALL SERVICE PROVIDER
             </button>
         </a>
     </div>
