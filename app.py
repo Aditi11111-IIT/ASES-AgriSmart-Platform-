@@ -89,30 +89,33 @@ if page == "Home & AI Recommendation":
     with col2:
         u_budget = st.number_input("Budget per Acre (₹)", value=20000)
 
-    if st.button("Run AI Analysis"): [cite: 14]
-        # AI Implementation (Member 1 Task)
+    # Ensure there are exactly 4 spaces for each indentation level
+    if st.button("Run AI Analysis"):
+        # KNN Implementation (Member 1 Task)
         X = df[['Soil_Idx', 'Sowing Month', 'Cost per Acre']]
-        knn = NearestNeighbors(n_neighbors=3, metric='euclidean') [cite: 15]
+        knn = NearestNeighbors(n_neighbors=3, metric='euclidean')
         knn.fit(X)
         
-        u_soil_idx = le.transform([st.session_state.selected_soil])[0] [cite: 16]
+        # We use st.session_state.selected_soil which was set by the image buttons
+        u_soil_idx = le.transform([st.session_state.selected_soil])[0]
         distances, indices = knn.kneighbors([[u_soil_idx, u_month, u_budget]])
         
-        st.subheader("Top 3 Recommendations") [cite: 17]
+        st.subheader("Top 3 Recommendations")
         recs = df.iloc[indices[0]].copy()
         
-        # Suitability Score Logic (Member 1 Task) [cite: 18]
+        # Suitability Score Logic (Member 1 Task)
         def calculate_suitability(row):
             score = 100
-            if row['Soil Type'] != st.session_state.selected_soil: score -= 30
+            if row['Soil Type'] != st.session_state.selected_soil: 
+                score -= 30
             month_diff = abs(row['Sowing Month'] - u_month)
-            score -= (month_diff * 10) [cite: 20, 21]
+            score -= (month_diff * 10)
             return max(score, 5)
 
         recs['Match %'] = recs.apply(calculate_suitability, axis=1)
         
         for i, row in recs.iterrows():
-            st.success(f"**{row['Crop Name']}** - {row['Match %']}% Suitability Match") [cite: 17]
+            st.success(f"**{row['Crop Name']}** - {row['Match %']}% Suitability Match")
             st.info(f"Water Req: {row['Water Requirement']}mm | Est. Cost: ₹{row['Cost per Acre']}")
 
 # --- PAGE 2: PESTS & MAINTENANCE (Member 3) ---
