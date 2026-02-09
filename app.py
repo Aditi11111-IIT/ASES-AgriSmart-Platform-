@@ -11,65 +11,47 @@ from fpdf import FPDF
 st.set_page_config(page_title="ASES: Agri-Smart", layout="wide", page_icon="🌾")
 API_KEY = "44ce6d6e018ff31baf4081ed56eb7fb7"
 
-# --- 2. ULTRA-HIGH VISIBILITY CSS ---
+# --- 2. TELEGRAM ELEGANCE CSS ---
 st.markdown("""
     <style>
-    /* Force high contrast for all text */
-    html, body, [class*="st-"] {
-        color: #000000 !important; 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    /* Telegram Palette */
+    html, body, [class*="st-"] { color: #222222 !important; font-family: 'Inter', -apple-system, sans-serif; }
     
-    /* Sidebar: Dark background with WHITE text for contrast */
+    /* Sidebar: Telegram Dark Blue */
     [data-testid="stSidebar"] {
-        background-color: #0E1117 !important;
+        background-color: #243139 !important;
     }
-    [data-testid="stSidebar"] * {
-        color: #FFFFFF !important;
-    }
+    [data-testid="stSidebar"] * { color: #EFEFEF !important; }
 
-    /* Main Cards: White background with Black text */
+    /* Elegant Card Layout */
     .main-card { 
-        padding: 25px; 
-        border-radius: 10px; 
-        background-color: #FFFFFF; 
-        border: 2px solid #28B463; /* Green border for visibility */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
-        margin-bottom: 20px;
-        color: #000000 !important;
+        padding: 30px; border-radius: 12px; background-color: #FFFFFF; 
+        border: 1px solid #E0E0E0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+        margin-bottom: 25px; color: #222222 !important;
     }
     
-    /* Weather Widget: High contrast Blue */
+    /* Header & Action Buttons: Telegram Blue */
     .weather-widget {
-        background-color: #1A5276;
-        color: #FFFFFF !important; 
-        padding: 15px; 
-        border-radius: 8px; 
-        text-align: center;
-        font-size: 1.3rem;
-        font-weight: bold;
-        margin-bottom: 20px;
+        background-color: #2481CC; color: #FFFFFF !important; 
+        padding: 20px; border-radius: 12px; text-align: center;
+        font-size: 1.2rem; font-weight: 500; margin-bottom: 25px;
     }
-
-    /* Green Status Badges */
-    .status-badge {
-        padding: 5px 15px; 
-        border-radius: 4px; 
-        font-weight: bold; 
-        background-color: #28B463; 
-        color: #FFFFFF !important;
-        display: inline-block;
+    .stButton>button {
+        background-color: #2481CC; color: white !important; border-radius: 8px;
+        height: 3.5em; width: 100%; font-weight: 600; border: none;
     }
-
-    /* Headers */
-    h1, h2, h3 { color: #186A3B !important; font-weight: 800 !important; }
     
-    /* Input Labels visibility */
-    label { color: #000000 !important; font-weight: bold !important; }
+    .status-badge {
+        padding: 6px 16px; border-radius: 20px; font-weight: bold; 
+        background-color: #E1F5FE; color: #0288D1; display: inline-block;
+    }
+
+    h1, h2, h3 { color: #2481CC !important; font-weight: 700 !important; }
+    label { color: #666666 !important; font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. DATA ENGINE ---
+# --- 3. DATA & WEATHER ENGINE ---
 @st.cache_data
 def load_data():
     crops = {
@@ -85,112 +67,100 @@ df = load_data()
 le = LabelEncoder()
 df['Soil_Idx'] = le.fit_transform(df['Soil Type'])
 
-india_map = {
-    "Bihar": ["Patna", "Gaya", "Muzaffarpur"],
-    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar"],
-    "Maharashtra": ["Mumbai", "Pune", "Nagpur"],
-    "Uttar Pradesh": ["Lucknow", "Agra", "Varanasi"]
-}
+# Initialize Global Session State
+if 'temp' not in st.session_state: st.session_state.temp = 25
+if 'hum' not in st.session_state: st.session_state.hum = 50
+if 'u_dist' not in st.session_state: st.session_state.u_dist = "Patna"
 
-# --- 4. SIDEBAR SECTIONS ---
+# --- 4. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/en/5/52/Indian_Institute_of_Technology_Patna_Logo.png", width=120)
-    st.markdown("### 🗺️ NAVIGATION")
-    tab_selection = st.radio("GO TO PAGE:", 
-                            ["🌾 Crop Recommendation", "🛡️ Environmental Risk", "📜 Government Schemes", "🚜 Rental Marketplace"])
+    st.markdown("### ASES SERVICES")
+    tab = st.radio("GO TO SECTION", ["🌾 Recommendations", "🛡️ Risk Center", "📜 Govt Library", "🚜 Resource Hub"])
+    
     st.markdown("---")
-    st.write("ASES System v3.0")
-
-# --- 5. TAB LOGIC ---
-
-if tab_selection == "🌾 Crop Recommendation":
-    st.title("Crop Recommendation Engine")
+    st.markdown("#### 📍 SET LOCATION")
+    india_map = {"Bihar": ["Patna", "Gaya"], "Punjab": ["Ludhiana", "Amritsar"], 
+                 "Maharashtra": ["Mumbai", "Pune"], "UP": ["Lucknow", "Agra"]}
+    st_select = st.selectbox("State", list(india_map.keys()))
+    dt_select = st.selectbox("District", india_map[st_select])
+    st.session_state.u_dist = dt_select
     
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1: u_state = st.selectbox("STEP 1: SELECT STATE", list(india_map.keys()))
-    with c2: u_dist = st.selectbox("STEP 2: SELECT DISTRICT", india_map[u_state])
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Weather widget
+    # Global Weather Update
     try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={u_dist},IN&appid={API_KEY}&units=metric"
-        w_res = requests.get(url).json()
-        temp, hum = w_res['main']['temp'], w_res['main']['humidity']
-        st.markdown(f'<div class="weather-widget">CURRENT WEATHER: {temp}°C | {hum}% HUMIDITY</div>', unsafe_allow_html=True)
-    except:
-        temp, hum = 28, 52
+        w_url = f"http://api.openweathermap.org/data/2.5/weather?q={dt_select},IN&appid={API_KEY}&units=metric"
+        w_res = requests.get(w_url).json()
+        st.session_state.temp = w_res['main']['temp']
+        st.session_state.hum = w_res['main']['humidity']
+    except: pass
 
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    st.write("### STEP 3: SELECT SOIL TYPE")
-    soil_opts = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
-    if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
-    s_cols = st.columns(4)
-    for i, s in enumerate(soil_opts):
-        with s_cols[i]:
-            if st.button(s, use_container_width=True): st.session_state.soil = s
-    
-    st.write(f"CURRENTLY SELECTED: **{st.session_state.soil}**")
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- 5. TAB-SPECIFIC LAYOUTS ---
 
-    u_budget = st.slider("INVESTMENT BUDGET (₹ PER ACRE)", 5000, 50000, 15000)
-    u_month = st.slider("SOWING MONTH (1-12)", 1, 12, 6)
+if tab == "🌾 Recommendations":
+    st.title("AgriAI Crop Recommendation")
+    st.markdown(f'<div class="weather-widget">📍 {st.session_state.u_dist}: {st.session_state.temp}°C | {st.session_state.hum}% Humidity</div>', unsafe_allow_html=True)
 
-    if st.button("🚀 GET AI RECOMMENDATION"):
-        # KNN Analysis
+    # Instruction Card 1
+    with st.container():
+        st.markdown('<div class="main-card"><b>Instruction:</b> Select your land\'s soil type from the options below.</div>', unsafe_allow_html=True)
+        soil_types = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
+        if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
+        s_cols = st.columns(4)
+        for i, s in enumerate(soil_types):
+            with s_cols[i]:
+                if st.button(s): st.session_state.soil = s
+        st.write(f"Current Choice: **{st.session_state.soil}**")
+
+    # Instruction Card 2
+    with st.container():
+        st.markdown('<div class="main-card"><b>Instruction:</b> Adjust the budget and timing to find the best match.</div>', unsafe_allow_html=True)
+        bud = st.slider("Budget (₹/Acre)", 5000, 50000, 15000)
+        mon = st.slider("Month (1=Jan, 12=Dec)", 1, 12, 6)
+
+    if st.button("🚀 RUN AI ANALYZER"):
+        
         X = df[['Soil_Idx', 'Sowing Month', 'Cost per Acre']]
         knn = NearestNeighbors(n_neighbors=2).fit(X)
         u_idx = le.transform([st.session_state.soil])[0]
-        dist, idx = knn.kneighbors([[u_idx, u_month, u_budget]])
+        dist, idx = knn.kneighbors([[u_idx, mon, bud]])
         recs = df.iloc[idx[0]]
         
-        st.write("### 🎯 TOP MATCHES FOR YOUR LAND")
-        res_cols = st.columns(len(recs))
+        st.subheader("Top Matches")
+        r_cols = st.columns(len(recs))
         for i, row in enumerate(recs.iterrows()):
-            with res_cols[i]:
-                st.markdown(f"""
-                <div class="main-card">
-                    <h2 style="color:#1D8348;">{row[1]['Crop Name']}</h2>
-                    <p><b>Estimated Cost:</b> ₹{row[1]['Cost per Acre']}</p>
-                    <p><b>Water Need:</b> {row[1]['Water Requirement']}mm</p>
-                    <div class="status-badge">AI MATCH: {99-i}%</div>
-                </div>
-                """, unsafe_allow_html=True)
+            with r_cols[i]:
+                st.markdown(f"""<div class="main-card">
+                <h3>{row[1]['Crop Name']}</h3>
+                <p>₹{row[1]['Cost per Acre']} Cost</p>
+                <div class="status-badge">{99-i}% Match</div>
+                </div>""", unsafe_allow_html=True)
 
-elif tab_selection == "🛡️ Environmental Risk":
-    st.title("Risk Assessment")
+elif tab == "🛡️ Risk Center":
+    st.title("Environmental Resilience")
     
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    if 'hum' in locals() and hum > 70:
-        st.error(f"🚨 ALERT: HIGH HUMIDITY DETECTED ({hum}%)")
-        st.write("Fungal pathogens thrive in these conditions. Check for Blight or Mildew.")
+    st.markdown('<div class="main-card"><b>Instruction:</b> Review regional humidity alerts to prepare maintenance cycles.</div>', unsafe_allow_html=True)
+    
+    if st.session_state.hum > 70:
+        st.error(f"High Risk Alert: Humidity is at {st.session_state.hum}%")
         
     else:
-        st.success(f"✅ SAFE: HUMIDITY IS {hum}%")
-        st.write("Climatic conditions are currently stable. No major fungal alerts.")
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.success(f"Safe: Humidity is at {st.session_state.hum}%. No fungal outbreaks expected.")
 
-elif tab_selection == "📜 Government Schemes":
-    st.title("Agricultural Schemes")
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
-    schemes = pd.DataFrame({
-        "SCHEME NAME": ["PM-KISAN", "PMFBY", "SOIL HEALTH CARD"],
-        "OFFICIAL BENEFIT": ["₹6,000 Direct Payout", "Crop Insurance Cover", "Detailed Soil Lab Report"]
-    })
-    st.table(schemes)
-    st.markdown('</div>', unsafe_allow_html=True)
+elif tab == "📜 Govt Library":
+    st.title("National Scheme Database")
+    st.markdown('<div class="main-card"><b>Instruction:</b> Check eligibility for the following active schemes.</div>', unsafe_allow_html=True)
+    st.table(pd.DataFrame({
+        "Scheme": ["PM-KISAN", "PMFBY", "Soil Card"],
+        "Provision": ["Direct Cash Support", "Crop Insurance", "Soil Testing"]
+    }))
 
-elif tab_selection == "🚜 Rental Marketplace":
-    st.title("Equipment Rental")
-    st.markdown("""
-    <div class="main-card" style="text-align:center;">
-        <h3>CONNECT WITH PROVIDERS</h3>
-        <p>Verified machinery owners available in your district.</p>
-        <br>
+elif tab == "🚜 Resource Hub":
+    st.title("Machinery & Logistics")
+    st.markdown(f'<div class="main-card"><b>Instruction:</b> Direct connect to verified equipment owners in {st.session_state.u_dist}.</div>', unsafe_allow_html=True)
+    st.markdown(f"""<div class="main-card" style="text-align:center;">
         <a href="tel:9999911111" style="text-decoration:none;">
-            <button style="padding:15px 50px; background-color:#186A3B; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.2rem;">
-                📞 CALL SERVICE PROVIDER
+            <button style="background:#2481CC; color:white; padding:15px; border-radius:8px; border:none; width:60%; font-size:1.1rem; cursor:pointer;">
+                📞 CONTACT NEAREST PROVIDER
             </button>
         </a>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
