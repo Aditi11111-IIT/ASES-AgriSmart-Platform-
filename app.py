@@ -5,170 +5,172 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
 import os
 
-# --- PAGE CONFIGURATION (Member 2) ---
+# --- 1. PAGE CONFIG & STYLING (Member 2) ---
 st.set_page_config(page_title="ASES: Agri-Smart Solutions", layout="wide", page_icon="🌾")
 
-# --- CUSTOM CSS FOR UI (Member 2) ---
 st.markdown("""
     <style>
     .main { background-color: #f5f7f9; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #2e7d32; color: white; }
-    .status-box { padding: 20px; border-radius: 10px; background-color: #ffffff; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
-    /* Style for image-selection buttons */
-    div.stButton > button:first-child {
-        background-color: #f0f2f6;
-        color: #31333F;
-        border: 2px solid #2e7d32;
-    }
-    div.stButton > button:active {
-        background-color: #2e7d32;
-        color: white;
-    }
+    .stButton>button { width: 100%; border-radius: 8px; height: 3.5em; background-color: #2e7d32; color: white; font-weight: bold; border: none; transition: 0.3s; }
+    .stButton>button:hover { background-color: #1b5e20; border: 2px solid #a5d6a7; }
+    .card { padding: 20px; border-radius: 10px; background-color: white; border-left: 5px solid #2e7d32; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
     </style>
     """, unsafe_allow_html=True)
 
-# --- DATA LOADING & AI ENGINE (Member 1) ---
+# --- 2. DATA SCIENCE ENGINE (Member 1) ---
 @st.cache_data
-def load_data():
+def get_master_data():
+    # Columns: Crop Name, Soil Type, Water (mm), Season, Sowing Month, Cost/Acre
     data = {
         'Crop Name': ['Wheat', 'Rice', 'Cotton', 'Maize', 'Groundnut', 'Soybean', 'Mustard', 'Sugarcane'],
         'Soil Type': ['Alluvial', 'Alluvial', 'Black Soil', 'Red Soil', 'Sandy', 'Black Soil', 'Alluvial', 'Loamy'],
         'Water Requirement': [500, 1200, 800, 600, 400, 700, 450, 1500],
+        'Ideal Season': ['Rabi', 'Kharif', 'Kharif', 'Kharif', 'Kharif', 'Kharif', 'Rabi', 'Annual'],
         'Sowing Month': [11, 6, 6, 6, 5, 6, 10, 2],
         'Cost per Acre': [15000, 25000, 20000, 12000, 18000, 16000, 14000, 30000]
     }
     df = pd.DataFrame(data)
+    # Cleaning (Member 1 Task)
     df['Soil Type'] = df['Soil Type'].str.strip().str.title()
     return df
 
-df = load_data()
-le = LabelEncoder()
-df['Soil_Idx'] = le.fit_transform(df['Soil Type'])
+df = get_master_data()
+le_soil = LabelEncoder()
+df['Soil_Idx'] = le_soil.fit_transform(df['Soil Type'])
 
-# --- APP NAVIGATION ---
-st.sidebar.title("🍀 ASES Navigation")
-page = st.sidebar.radio("Go to", ["Home & AI Recommendation", "Pest & Maintenance", "Kisan Sampark (Market)", "Govt. Schemes"])
+# --- 3. NAVIGATION ---
+st.sidebar.title("🍀 ASES Platform")
+st.sidebar.markdown("Group 32 | IIT Patna")
+page = st.sidebar.radio("Navigate to:", 
+    ["AgriAI Engine", "Pest & Resilience", "Kisan Sampark (Market)", "Knowledge Hub & Schemes"])
 
-# --- PAGE 1: AI RECOMMENDATION (Member 1 & 2) ---
-if page == "Home & AI Recommendation":
+# --- MODULE A & B: AI & UI (Member 1 & 2) ---
+if page == "AgriAI Engine":
     st.title("🌾 AgriAI Recommendation Engine")
-    
-    # Visual Sidebar Context Box (Member 2 Task)
-    st.sidebar.info("Select the photo that best matches the soil in your field.") [cite: 34, 35]
+    st.info("Member 2: Zero-Typing Interface active. Select your conditions visually.")
 
-    st.subheader("Step 1: Select Soil Type (Click Image)") [cite: 31]
-    
-    # Zero-Typing Clickable Image Grid (Member 2 Task)
-    soil_types = ["Alluvial", "Black Soil", "Red Soil", "Sandy"] [cite: 31]
-    # Replace these URLs with the local paths in your /assets folder on GitHub
-    soil_images = [
+    # Visual Soil Selection
+    st.subheader("1. Select Soil Type")
+    soil_opts = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
+    # Change these paths to your local './assets/filename.jpg' once uploaded
+    soil_imgs = [
         "https://raw.githubusercontent.com/google-gemini/ASES-Project/main/assets/alluvial.jpg",
         "https://raw.githubusercontent.com/google-gemini/ASES-Project/main/assets/black.jpg",
         "https://raw.githubusercontent.com/google-gemini/ASES-Project/main/assets/red.jpg",
         "https://raw.githubusercontent.com/google-gemini/ASES-Project/main/assets/sandy.jpg"
     ]
 
-    # Persistent state to remember click [cite: 32]
-    if 'selected_soil' not in st.session_state:
-        st.session_state.selected_soil = "Alluvial"
-
+    if 'selected_soil' not in st.session_state: st.session_state.selected_soil = "Alluvial"
+    
     cols = st.columns(4)
     for i in range(4):
         with cols[i]:
-            st.image(soil_images[i], caption=soil_types[i], use_container_width=True)
-            if st.button(f"Pick {soil_types[i]}", key=f"soil_{i}"):
-                st.session_state.selected_soil = soil_types[i]
-    
-    st.write(f"**Currently Selected Soil:** {st.session_state.selected_soil}")
+            st.image(soil_imgs[i], caption=soil_opts[i], use_container_width=True)
+            if st.button(f"Select {soil_opts[i]}", key=f"s_{i}"):
+                st.session_state.selected_soil = soil_opts[i]
+
+    st.write(f"**Selected Foundation:** {st.session_state.selected_soil}")
 
     st.markdown("---")
-    st.subheader("Step 2: Environmental Inputs")
-    col1, col2 = st.columns(2)
-    with col1:
-        u_month = st.slider("Sowing Month (1=Jan, 12=Dec)", 1, 12, 6)
-    with col2:
-        u_budget = st.number_input("Budget per Acre (₹)", value=20000)
+    st.subheader("2. Environmental Inputs")
+    c1, c2 = st.columns(2)
+    with c1:
+        u_month = st.select_slider("Select Sowing Month", options=list(range(1, 13)), value=6)
+    with c2:
+        u_budget = st.number_input("Max Budget (₹/Acre)", min_value=5000, value=20000)
 
-    # Ensure there are exactly 4 spaces for each indentation level
-    if st.button("Run AI Analysis"):
-        # KNN Implementation (Member 1 Task)
+    if st.button("🚀 GENERATE RECOMMENDATIONS (KNN Logic)"):
+        # KNN Implementation (Member 1)
         X = df[['Soil_Idx', 'Sowing Month', 'Cost per Acre']]
-        knn = NearestNeighbors(n_neighbors=3, metric='euclidean')
-        knn.fit(X)
+        knn = NearestNeighbors(n_neighbors=3, metric='euclidean').fit(X)
         
-        # We use st.session_state.selected_soil which was set by the image buttons
-        u_soil_idx = le.transform([st.session_state.selected_soil])[0]
+        try:
+            u_soil_idx = le_soil.transform([st.session_state.selected_soil])[0]
+        except:
+            u_soil_idx = 0
+            
         distances, indices = knn.kneighbors([[u_soil_idx, u_month, u_budget]])
-        
-        st.subheader("Top 3 Recommendations")
         recs = df.iloc[indices[0]].copy()
-        
-        # Suitability Score Logic (Member 1 Task)
-        def calculate_suitability(row):
+
+        # Suitability Score Logic (Member 1 Detail)
+        def get_score(row):
             score = 100
-            if row['Soil Type'] != st.session_state.selected_soil: 
-                score -= 30
-            month_diff = abs(row['Sowing Month'] - u_month)
-            score -= (month_diff * 10)
+            if row['Soil Type'] != st.session_state.selected_soil: score -= 30
+            m_diff = abs(row['Sowing Month'] - u_month)
+            score -= (m_diff * 10) # 10% penalty per month off
             return max(score, 5)
 
-        recs['Match %'] = recs.apply(calculate_suitability, axis=1)
+        recs['Match'] = recs.apply(get_score, axis=1)
         
-        for i, row in recs.iterrows():
-            st.success(f"**{row['Crop Name']}** - {row['Match %']}% Suitability Match")
-            st.info(f"Water Req: {row['Water Requirement']}mm | Est. Cost: ₹{row['Cost per Acre']}")
+        st.subheader("AI Analysis Results:")
+        for _, row in recs.iterrows():
+            st.markdown(f"""
+            <div class="card">
+                <h3>{row['Crop Name']}: {row['Match']}% Match</h3>
+                <p><b>Water:</b> {row['Water Requirement']}mm | <b>Season:</b> {row['Ideal Season']}</p>
+                <p><b>Estimated Cost:</b> ₹{row['Cost per Acre']}</p>
+            </div><br>
+            """, unsafe_allow_html=True)
 
-# --- PAGE 2: PESTS & MAINTENANCE (Member 3) ---
-elif page == "Pest & Maintenance":
+# --- MODULE C & D: RESILIENCE (Member 3) ---
+elif page == "Pest & Resilience":
     st.title("🛡️ Resilience & Protection")
-    st.sidebar.help("Select a crop to view protection guides.") [cite: 34, 35]
+    st.write("Visual Pest Diagnosis Library (Member 3)")
     
-    crop_choice = st.selectbox("Select Crop for Protection Guide", df['Crop Name'].unique())
+    crop = st.selectbox("Select Crop", df['Crop Name'].unique())
     
-    pest_db = { [cite: 44]
-        "Wheat": {"Pest": "Brown Rust", "Remedy": "Propiconazole 25% EC", "Organic": "Neem Oil Spray"},
-        "Rice": {"Pest": "Stem Borer", "Remedy": "Chlorantraniliprole 0.4G", "Organic": "Pheromone Traps"},
-        "Cotton": {"Pest": "Pink Bollworm", "Remedy": "Indoxacarb 14.5% SC", "Organic": "Light Traps"}
+    # Member 3: Dictionary Logic for Pests
+    pest_data = {
+        "Wheat": {"Pest": "Brown Rust", "Chem": "Propiconazole 25% EC", "Org": "Neem Oil"},
+        "Rice": {"Pest": "Stem Borer", "Chem": "Chlorantraniliprole", "Org": "Trichogramma Cards"},
+        "Cotton": {"Pest": "Pink Bollworm", "Chem": "Indoxacarb", "Org": "Pheromone Traps"}
     }
     
-    if crop_choice in pest_db:
-        st.warning(f"Common Pest: {pest_db[crop_choice]['Pest']}")
-        st.write(f"**Chemical Remedy:** {pest_db[crop_choice]['Remedy']}") [cite: 44]
-        st.write(f"**Organic Remedy:** {pest_db[crop_choice]['Organic']}") [cite: 44]
-    else:
-        st.write("No major pests reported for this crop.")
-
+    if crop in pest_data:
+        st.error(f"Alert: {pest_data[crop]['Pest']} detected in this category.")
+        st.write(f"**Chemical Remedy:** {pest_data[crop]['Chem']}")
+        st.write(f"**Organic Remedy:** {pest_data[crop]['Org']}")
+    
     st.markdown("---")
-    st.subheader("⚙️ Maintenance Guides") [cite: 41]
-    st.info("Crisis Mode: Use 20% less water for the first 3 weeks if irrigation is limited.") [cite: 53]
+    st.subheader("⚙️ Maintenance Guides & Crisis Mode")
+    with st.expander("🚨 CRISIS MODE: Water Shortage"):
+        st.warning("If irrigation fails: Reduce fertilizer by 30% and apply mulch immediately.")
+    st.info("Tractor Maintenance: Check air filters every 50 hours of use.")
 
-# --- PAGE 3: KISAN SAMPARK (Member 4) ---
+# --- MODULE E & F: CONNECTIVITY (Member 4) ---
 elif page == "Kisan Sampark (Market)":
     st.title("📞 Kisan Sampark Marketplace")
-    st.write("Rent machinery directly from owners.") [cite: 56]
+    st.write("Hybrid Connectivity: Rent Machinery (Member 4)")
     
-    machinery = pd.DataFrame({ [cite: 60]
-        'Equipment': ['Tractor', 'Harvester', 'Borewell Drill'],
-        'Owner': ['Ram Singh', 'Amit Kumar', 'S. Patil'],
-        'Contact': ['9999999999', '8888888888', '7777777777']
-    })
+    # machinery.csv Mock Data
+    machinery = [
+        {"Tool": "John Deere Tractor", "Owner": "Rajesh Kumar", "Phone": "9999911111"},
+        {"Tool": "Power Tiller", "Owner": "Suresh Pal", "Phone": "8888822222"},
+        {"Tool": "Borewell Pump", "Owner": "Amit Singh", "Phone": "7777733333"}
+    ]
     
-    for i, row in machinery.iterrows():
-        with st.container():
-            st.write(f"### {row['Equipment']}")
-            st.write(f"Owner: {row['Owner']}")
-            # One-Tap Call feature (Member 4 Task) [cite: 58, 61, 62]
-            st.markdown(f'<a href="tel:{row["Contact"]}"><button style="background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px;">📞 Call Owner ({row["Contact"]})</button></a>', unsafe_allow_html=True)
-            st.write("---")
+    for item in machinery:
+        c1, c2 = st.columns([3, 1])
+        with c1:
+            st.write(f"**{item['Tool']}** (Owner: {item['Owner']})")
+        with c2:
+            # Member 4: HTML Injection for One-Tap Call
+            call_btn = f'<a href="tel:{item["Phone"]}"><button style="background-color:#007bff; color:white; border:none; padding:10px; border-radius:5px;">📞 Call Now</button></a>'
+            st.markdown(call_btn, unsafe_allow_html=True)
+        st.write("---")
 
-# --- PAGE 4: GOVT SCHEMES (Member 4) ---
 else:
-    st.title("📜 Government Schemes") [cite: 63]
-    farmer_type = st.radio("Select Farmer Category", ["Small/Marginal", "Large Scale"]) [cite: 65]
+    st.title("📜 Knowledge Hub & Govt. Schemes")
     
-    if farmer_type == "Small/Marginal":
-        st.success("1. PM-Kisan Samman Nidhi (₹6000/year)") [cite: 64]
-        st.success("2. PM Fasal Bima Yojana (Low Premium)")
+    # Member 4: Filter System
+    f_type = st.selectbox("I am a:", ["Small Farmer", "Large Scale Farmer", "New Startup"])
+    
+    if f_type == "Small Farmer":
+        st.success("✅ PM-Kisan Samman Nidhi: ₹6,000 yearly income support.")
+        st.success("✅ PM Fasal Bima Yojana: Crop insurance at 2% premium.")
     else:
-        st.success("1. NABARD Subsidy for Cold Storage")
-        st.success("2. Agri-Infrastructure Fund")
+        st.success("✅ Agri-Infrastructure Fund: Interest subvention on cold storage.")
+    
+    st.markdown("---")
+    st.subheader("📚 Downloadable Seed Charts")
+    st.download_button("Download Fertilizer Dosage PDF", data="Mock PDF Content", file_name="fert_chart.pdf")
