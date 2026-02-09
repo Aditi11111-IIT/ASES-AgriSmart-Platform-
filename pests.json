@@ -1,0 +1,5 @@
+{
+  "Wheat": {"Pest": "Brown Rust", "Remedy": "Propiconazole"},
+  "Rice": {"Pest": "Stem Borer", "Remedy": "Chlorantraniliprole"},
+  "Cotton": {"Pest": "Pink Bollworm", "Remedy": "Pheromone Traps"}
+}
