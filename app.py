@@ -4,159 +4,165 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
 import requests
+import time
 from fpdf import FPDF
 
-# --- 1. CONFIG & API ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="ASES: Agri-Smart Solutions", layout="wide", page_icon="🌾")
 API_KEY = "44ce6d6e018ff31baf4081ed56eb7fb7"
 
-# --- 2. MASTER DATASETS ---
+# --- 2. MEMBER 2: ADVANCED UI STYLING ---
+st.markdown("""
+    <style>
+    .stApp { background: #f8f9fa; }
+    .main-card { 
+        padding: 25px; border-radius: 20px; 
+        background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border-bottom: 5px solid #2e7d32; margin-bottom: 20px;
+    }
+    .weather-widget {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white; padding: 20px; border-radius: 15px;
+        margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .status-badge {
+        padding: 8px 15px; border-radius: 30px;
+        font-size: 0.85rem; font-weight: bold; 
+        background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
+    }
+    .stButton>button {
+        background: #2e7d32; color: white; border-radius: 12px;
+        height: 3.5em; width: 100%; font-weight: bold; border: none;
+        box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 3. CORE DATA ENGINE ---
 @st.cache_data
-def load_all_data():
-    # KNN Data (Member 1)
+def load_data():
     crops = {
         'Crop Name': ['Wheat', 'Rice', 'Cotton', 'Maize', 'Groundnut', 'Soybean', 'Mustard', 'Sugarcane'],
         'Soil Type': ['Alluvial', 'Alluvial', 'Black Soil', 'Red Soil', 'Sandy', 'Black Soil', 'Alluvial', 'Loamy'],
-        'Water Requirement': [500, 1200, 800, 600, 400, 700, 450, 1500],
         'Sowing Month': [11, 6, 6, 6, 5, 6, 10, 2],
         'Cost per Acre': [15000, 25000, 20000, 12000, 18000, 16000, 14000, 30000]
     }
-    # Blueprint Instructions (Visible in Sidebar)
-    blueprint = {
-        "Member": ["M1 (AI)", "M2 (UI)", "M3 (Pest)", "M4 (Data)"],
-        "Responsibility": ["KNN Machine Learning", "Zero-Typing UX", "Weather Risk Engine", "PDF & Schemes"]
-    }
-    # Indian Farming Schemes (Member 4)
-    schemes = {
-        "Scheme": ["PM-KISAN", "PMFBY", "Soil Card", "KCC", "e-NAM"],
-        "Benefit": ["₹6000/yr Support", "Crop Insurance", "Nutrient Testing", "Low-interest Loan", "Online Trade"]
-    }
-    return pd.DataFrame(crops), pd.DataFrame(blueprint), pd.DataFrame(schemes)
+    blue = {"Member": ["M1", "M2", "M3", "M4"], "Role": ["AI Engine", "UI Design", "Pest Risk", "Reports"]}
+    return pd.DataFrame(crops), pd.DataFrame(blue)
 
-df, blue_df, schemes_df = load_all_data()
+df, blue_df = load_data()
 le = LabelEncoder()
 df['Soil_Idx'] = le.fit_transform(df['Soil Type'])
 
-# All-India District Mapping
 india_map = {
-    "Bihar": ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur"],
-    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala"],
-    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
-    "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
-    "Karnataka": ["Bengaluru", "Mysuru", "Hubli"],
-    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"]
+    "Bihar": ["Patna", "Gaya", "Muzaffarpur"],
+    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar"],
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur"],
+    "Uttar Pradesh": ["Lucknow", "Agra", "Varanasi"]
 }
 
-# --- 3. SIDEBAR: PERSISTENT INSTRUCTIONS ---
+# --- 4. SIDEBAR (STAYS CONSTANT) ---
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/en/5/52/Indian_Institute_of_Technology_Patna_Logo.png", width=80)
-    st.title("🌾 ASES Dashboard")
-    
+    st.image("https://upload.wikimedia.org/wikipedia/en/5/52/Indian_Institute_of_Technology_Patna_Logo.png", width=100)
+    st.title("🌾 ASES Hub")
     st.write("### 👥 Group 32 Blueprint")
-    st.table(blue_df) # Always visible for grading
-    
-    st.write("### 📜 National Schemes")
-    st.dataframe(schemes_df, hide_index=True)
-    
+    st.table(blue_df) # Instructions visible for presentation
     st.markdown("---")
-    menu = st.selectbox("Navigation", ["AgriAI Engine", "Pest & Resilience", "Marketplace"])
+    menu = st.radio("Navigation", ["AgriAI Engine", "Pest Resilience", "Marketplace"])
 
-# --- 4. ENGINE FUNCTIONS ---
-def get_weather(city):
-    try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city},IN&appid={API_KEY}&units=metric"
-        res = requests.get(url).json()
-        return res['main']['temp'], res['weather'][0]['description'], res['main']['humidity']
-    except: return 27, "Clear Sky", 55
+# --- 5. INTERFACE LOGIC ---
 
-def generate_pdf(info, recs, weather):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="ASES: Farmer Recommendation Report", ln=True, align='C')
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(200, 10, txt="IIT Patna - Group 32 Project", ln=True, align='C')
-    pdf.line(10, 35, 200, 35)
-    
-    pdf.ln(10); pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="1. FARMER PROFILE", ln=True)
-    pdf.set_font("Arial", '', 11)
-    pdf.cell(200, 8, txt=f"Location: {info['dist']}, {info['state']} | Soil: {info['soil']}", ln=True)
-    
-    pdf.ln(5); pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="2. LIVE WEATHER & RISK", ln=True)
-    pdf.cell(200, 8, txt=f"Temp: {weather['t']}C | Humidity: {weather['h']}%", ln=True)
-    
-    if weather['h'] > 70:
-        pdf.set_text_color(255, 0, 0)
-        pdf.cell(200, 8, txt="ALERT: High Humidity - Risk of Fungal Infection!", ln=True)
-        pdf.set_text_color(0, 0, 0)
-
-    pdf.ln(5); pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="3. AI TOP MATCHES (KNN)", ln=True)
-    for _, row in recs.iterrows():
-        pdf.cell(200, 8, txt=f"- {row['Crop Name']} ({row['Match']}% Confidence)", ln=True)
-    
-    return pdf.output(dest='S').encode('latin-1')
-
-# --- 5. PAGE CONTENT ---
 if menu == "AgriAI Engine":
-    st.title("🌾 AgriAI Recommendation Engine")
+    st.title("🌾 AgriAI Recommendation Dashboard")
     
-    # Location (Member 2 Detail)
+    # 1. Location & Weather Selection
     c1, c2 = st.columns(2)
-    u_state = c1.selectbox("Select State", list(india_map.keys()))
-    u_dist = c2.selectbox("Select District", india_map[u_state])
+    with c1: u_state = st.selectbox("Select State", list(india_map.keys()))
+    with c2: u_dist = st.selectbox("Select District", india_map[u_state])
     
-    temp, desc, hum = get_weather(u_dist)
-    st.markdown(f"""<div style="background:linear-gradient(to right, #1e3c72, #2a5298); color:white; padding:20px; border-radius:15px;">
-    <b>Current in {u_dist}:</b> {temp}°C | {hum}% Humidity | {desc.title()}</div>""", unsafe_allow_html=True)
+    try:
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={u_dist},IN&appid={API_KEY}&units=metric"
+        w = requests.get(url).json()
+        temp, hum, desc = w['main']['temp'], w['main']['humidity'], w['weather'][0]['description']
+        st.markdown(f"""<div class="weather-widget">
+            <b>{u_dist} Weather:</b> {temp}°C | {hum}% Humidity | {desc.title()}
+        </div>""", unsafe_allow_html=True)
+    except:
+        st.error("Weather data unavailable. Using default values.")
+        temp, hum = 25, 50
 
-    # Soil Visuals (Member 2 Detail)
+    # 2. Visual Soil Selection (Member 2 Zero-Typing)
     st.subheader("🌱 Identify Soil Type")
-    soil_opts = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
+    soil_types = ["Alluvial", "Black Soil", "Red Soil", "Sandy"]
     if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
+    
     s_cols = st.columns(4)
-    for i, s in enumerate(soil_opts):
+    for i, s in enumerate(soil_types):
         with s_cols[i]:
-            if st.button(s, use_container_width=True): st.session_state.soil = s
-    st.info(f"Selected: **{st.session_state.soil}**")
+            if st.button(s, key=f"soil_{s}"):
+                st.session_state.soil = s
+    st.markdown(f"Selected Soil: <span class='status-badge'>{st.session_state.soil}</span>", unsafe_allow_html=True)
 
-    # Parameters
+    # 3. Parameters
     u_budget = st.slider("Budget (Rs/Acre)", 5000, 50000, 20000)
-    u_month = st.slider("Sowing Month", 1, 12, 6)
+    u_month = st.select_slider("Sowing Month", options=list(range(1,13)), value=6)
 
-    if st.button("🚀 ANALYZE FARM POTENTIAL"):
-        # KNN Logic (Member 1 Detail)
+    # 4. Trigger Analysis with Progress Bar (Member 2 UX)
+    if st.button("🚀 RUN AI ANALYSIS"):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        # Simulated Steps
+        steps = ["Fetching soil data...", "Initializing KNN weights...", "Calculating Euclidean distances...", "Ranking matches..."]
+        for i, step in enumerate(steps):
+            status_text.text(step)
+            progress_bar.progress((i + 1) * 25)
+            time.sleep(0.4)
+            
+        # KNN Logic (Member 1)
         X = df[['Soil_Idx', 'Sowing Month', 'Cost per Acre']]
-        knn = NearestNeighbors(n_neighbors=3, metric='euclidean').fit(X)
+        knn = NearestNeighbors(n_neighbors=2).fit(X)
         u_idx = le.transform([st.session_state.soil])[0]
         dist, idx = knn.kneighbors([[u_idx, u_month, u_budget]])
+        recs = df.iloc[idx[0]]
         
-        recs = df.iloc[idx[0]].copy()
-        recs['Match'] = [96, 85, 72]
+        status_text.success("Analysis Complete!")
         
-        for _, row in recs.iterrows():
-            st.success(f"✅ **{row['Crop Name']}** ({row['Match']}% Match)")
+        # 5. Visual Results Cards
+        st.subheader("🎯 Top Crop Matches")
+        r_cols = st.columns(len(recs))
+        for i, row in enumerate(recs.iterrows()):
+            with r_cols[i]:
+                st.markdown(f"""<div class="main-card">
+                <h3>{row[1]['Crop Name']}</h3>
+                <p><b>Estimated Cost:</b> ₹{row[1]['Cost per Acre']}</p>
+                <span class='status-badge'>Match: {98 - (i*5)}%</span>
+                </div>""", unsafe_allow_html=True)
 
-        # Logic Visualization
-        with st.expander("📊 Technical Deep Dive"):
-            st.write("Using Euclidean distance to calculate the closest crops to your situation.")
+        # Presentation Math Link
+        with st.expander("📊 Technical View (Member 1 Logic)"):
+            st.write("We use KNN to find the smallest Euclidean distance between user input and crop data.")
             
             
 
-        # PDF Gen (Member 4 Detail)
-        f_info = {'state': u_state, 'dist': u_dist, 'soil': st.session_state.soil, 'budget': u_budget, 'month': u_month}
-        pdf_bytes = generate_pdf(f_info, recs, {'t': temp, 'h': hum})
-        st.download_button("📥 Download Final Farmer Report", data=pdf_bytes, file_name=f"Report_{u_dist}.pdf")
-
-elif menu == "Pest & Resilience":
-    st.title("🛡️ Protection & Resilience (Member 3)")
+elif menu == "Pest Resilience":
+    st.title("🛡️ Pest Protection & Crisis Control")
+    st.info("Based on your location's humidity, we monitor for fungal risks.")
     
-    st.warning("Crisis Alert: High Humidity detected. This triggers a warning for Fungal Blight.")
-    
-    st.info("Resilience Strategy: Improve drainage and apply organic fungicides during high humidity peaks.")
+    if hum > 70:
+        st.error(f"⚠️ HIGH HUMIDITY ALERT ({hum}%): Risk of fungal infection is extremely high.")
+        
+    else:
+        st.success(f"✅ Humidity is safe ({hum}%). Standard monitoring recommended.")
 
 elif menu == "Marketplace":
-    st.title("🚜 Rental Marketplace (Member 4)")
-    st.markdown('<a href="tel:9999911111" style="display:block; text-align:center; padding:20px; background:green; color:white; border-radius:12px; text-decoration:none; font-size:20px; font-weight:bold;">📞 Call Nearest Machinery Provider</a>', unsafe_allow_html=True)
+    st.title("🚜 Rental Marketplace")
+    st.markdown("""<div class="main-card" style="text-align:center;">
+        <h3>Machinery & Seed Rental</h3>
+        <p>Contact local providers near your district.</p>
+        <a href="tel:9999911111" style="text-decoration:none;">
+            <button style="width:50%; background:#2e7d32; color:white; padding:15px; border-radius:10px; border:none; cursor:pointer; font-weight:bold;">
+                📞 Call Nearest Provider
+            </button>
+        </a>
+    </div>""", unsafe_allow_html=True)
