@@ -27,7 +27,7 @@ st.markdown("""
     [data-testid="stSidebar"] * { color: #ffffff !important; }
     .highlight-text { color: #2481CC !important; font-weight: bold; }
     
-    /* MEMBER 4: Green Call Button */
+    /* MEMBER 4: Green Button Styling for Call Links */
     .call-btn {
         background-color: #28a745 !important;
         color: white !important;
@@ -42,7 +42,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. DATA LOADING ---
+# --- 3. DATA & WEATHER ---
 @st.cache_data
 def load_agri_data():
     crops = {
@@ -64,7 +64,7 @@ df, pest_df = load_agri_data()
 le = LabelEncoder()
 df['Soil_Idx'] = le.fit_transform(df['Soil Type'])
 
-# --- 4. SESSION STATE ---
+# --- 4. SESSION STATE & LOCATION ---
 if 'temp' not in st.session_state: st.session_state.temp = 25
 if 'hum' not in st.session_state: st.session_state.hum = 50
 if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
@@ -139,38 +139,57 @@ elif tab == "🛡️ Pest & Fertilizer":
 elif tab == "🚜 Rental Hub":
     # --- MEMBER 4: THE OPERATOR LOGIC ---
     st.title(f"🚜 Rental Machinery Desk: {dt_loc}")
-    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Connecting you to machinery owners in <b>{dt_loc}</b>.</p></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding tractor owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
 
-    # Database for local rentals
+    # Local Directory Database
     local_data = {
-        "Patna": [{"Machine": "Mahindra 575 DI", "Owner": "Suresh Kumar", "Rate": "₹800/hr", "Contact": "9876543210"}],
-        "Ludhiana": [{"Machine": "John Deere 5310", "Owner": "Amrit Singh", "Rate": "₹950/hr", "Contact": "9988776655"}],
-        "Pune": [{"Machine": "Sonalika Tiger", "Owner": "Vikram Patil", "Rate": "₹750/hr", "Contact": "9444455555"}]
+        "Patna": [
+            {"Machine": "Mahindra 575 DI", "Owner": "Suresh Kumar", "Rate": "₹800/hr", "Contact": "9876543210"},
+            {"Machine": "Power Tiller", "Owner": "Vijay Dev", "Rate": "₹400/hr", "Contact": "9122334455"}
+        ],
+        "Ludhiana": [
+            {"Machine": "John Deere 5310", "Owner": "Amrit Singh", "Rate": "₹950/hr", "Contact": "9988776655"},
+            {"Machine": "Combine Harvester", "Owner": "Gurmukh Gill", "Rate": "₹2500/hr", "Contact": "9812345678"}
+        ],
+        "Pune": [
+            {"Machine": "Sonalika Tiger", "Owner": "Vikram Patil", "Rate": "₹750/hr", "Contact": "9444455555"}
+        ]
     }
 
     results = local_data.get(dt_loc, [])
 
     if results:
-        for r in results:
-            st.markdown(f"""<div class="main-card">
-            <h4>{r['Machine']}</h4>
-            <p><b>Owner:</b> {r['Owner']} | <b>Rate:</b> {r['Rate']}</p>
-            <a href="tel:{r['Contact']}" class="call-btn">📞 Dial {r['Contact']}</a>
-            </div>""", unsafe_allow_html=True)
+        cols = st.columns(len(results))
+        for i, r in enumerate(results):
+            with cols[i]:
+                st.markdown(f"""<div class="main-card">
+                <h4>{r['Machine']}</h4>
+                <p><b>Owner:</b> {r['Owner']}</p>
+                <p class="highlight-text">Rate: {r['Rate']}</p>
+                <hr>
+                <a href="tel:{r['Contact']}" class="call-btn">📞 Call Now</a>
+                </div>""", unsafe_allow_html=True)
     else:
-        st.warning(f"No specific private listings for {dt_loc} yet.")
+        st.warning(f"No private owners listed in {dt_loc} yet.")
 
     st.markdown("---")
-    st.subheader("🌐 Global Rental Search")
+    st.subheader("🌐 Global Search (Google Maps Bridge)")
     
-    # Corrected Google Search Logic
-    search_query = f"Farming+Tractor+Rental+in+{dt_loc}+{st_loc}"
-    google_url = f"https://www.google.com/search?q={search_query}"
+    # Corrected Google Maps Search URL
+    search_query = f"Tractor+Rental+in+{dt_loc}+{st_loc}"
+    google_url = f"https://www.google.com/maps/search/{search_query}"
     
-    st.info(f"Click below to let Member 4 find all commercial centers in {dt_loc} via Google.")
+    st.info(f"Member 4 is scanning Google Maps for commercial centers in {dt_loc}.")
     
-    # FIX: st.link_button works on hosted URLs
+    # Member 4's Fixed Search Button
     st.link_button(f"🔍 Search Commercial Centers in {dt_loc}", google_url, use_container_width=True)
+
+    with st.expander("🆘 Need Government Help?"):
+        st.markdown(f"""
+            <a href="tel:18001801551" class="call-btn" style="background-color:#ffc107 !important; color:black !important;">
+                📞 Call Govt CHC Helpline (1800-180-1551)
+            </a>
+        """, unsafe_allow_html=True)
 
 elif tab == "📜 Govt Schemes":
     st.title("Agricultural Schemes")
@@ -180,11 +199,12 @@ elif tab == "📜 Govt Schemes":
     }))
 
 elif tab == "📊 Farmer Report":
-    st.title("Farmer Assessment Report")
+    st.title("Personalized Farmer Report")
     st.markdown(f"""<div class="main-card">
-        <h3>📍 Strategy Summary</h3>
+        <h3>📍 Assessment Summary</h3>
         <p><b>Location:</b> {dt_loc}, {st_loc}</p>
-        <p><b>Current Soil:</b> {st.session_state.soil}</p>
+        <p><b>Soil Profile:</b> {st.session_state.soil}</p>
+        <p><b>Climate:</b> {st.session_state.temp}°C | {st.session_state.hum}% Humidity</p>
     </div>""", unsafe_allow_html=True)
 
     if st.button("📥 Generate PDF Report"):
