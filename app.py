@@ -32,7 +32,8 @@ st.markdown("""
     }
     .highlight-text { color: #2481CC !important; font-weight: bold; }
     .stMarkdown p { font-weight: 500; }
-    /* Green Button for Member 4 */
+    
+    /* MEMBER 4: Green Button Styling */
     .call-btn {
         background-color: #28a745 !important;
         color: white !important;
@@ -142,11 +143,11 @@ elif tab == "🛡️ Pest & Fertilizer":
         </div>""", unsafe_allow_html=True)
 
 elif tab == "🚜 Rental Hub":
-    # MEMBER 4: THE OPERATOR LOGIC
+    # --- MEMBER 4: THE OPERATOR LOGIC ---
     st.title(f"🚜 Rental Machinery Desk: {dt_loc}")
-    st.markdown(f'<div class="main-card"><h3>Operator Search:</h3><p>Finding tractor and machinery owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding tractor and machinery owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
 
-    # Database logic for local rentals
+    # Local Directory Database (Member 4's Phone Directory)
     local_data = {
         "Patna": [
             {"Machine": "Mahindra 575 DI", "Owner": "Suresh Kumar", "Rate": "₹800/hr", "Contact": "9876543210"},
@@ -171,17 +172,27 @@ elif tab == "🚜 Rental Hub":
                 <h4>{r['Machine']}</h4>
                 <p><b>Owner:</b> {r['Owner']}</p>
                 <p class="highlight-text">Rate: {r['Rate']}</p>
-                <a href="tel:{r['Contact']}" class="call-btn">📞 Click to Call</a>
+                <hr>
+                <a href="tel:{r['Contact']}" class="call-btn">📞 Call Now</a>
                 </div>""", unsafe_allow_html=True)
     else:
-        st.warning("No private owners listed in this district yet.")
+        st.warning(f"No private owners listed in {dt_loc} yet.")
 
     st.markdown("---")
-    st.subheader("🌐 Global Search (Google Maps)")
-    # Member 4's "Live Search" deep link
-    google_url = f"https://www.google.com/maps/search/Tractor+Rental+near+{dt_loc}+{st_loc}"
-    if st.button("🔍 Search Google for Commercial Rental Centers"):
+    st.subheader("🌐 Global Search (Google Maps Bridge)")
+    # Member 4's Deep Link to Google Maps for ANY location in India
+    google_url = f"https://www.google.com/maps/search/Tractor+Rental+in+{dt_loc}+{st_loc}"
+    
+    st.info("Member 4 can scan Google Maps for commercial rental centers in your area.")
+    if st.button("🔍 Search Commercial Centers Near Me"):
         webbrowser.open_new_tab(google_url)
+
+    with st.expander("🆘 Need Government Help?"):
+        st.markdown("""
+            <a href="tel:18001801551" class="call-btn" style="background-color:#ffc107 !important; color:black !important;">
+                📞 Call Govt CHC Helpline (1800-180-1551)
+            </a>
+        """, unsafe_allow_html=True)
 
 elif tab == "📜 Govt Schemes":
     st.title("Agricultural Schemes")
