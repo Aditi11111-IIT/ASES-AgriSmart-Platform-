@@ -69,6 +69,8 @@ if 'temp' not in st.session_state: st.session_state.temp = 25
 if 'hum' not in st.session_state: st.session_state.hum = 50
 if 'soil' not in st.session_state: st.session_state.soil = "Alluvial"
 if 'recs_list' not in st.session_state: st.session_state.recs_list = []
+# NEW: Session state to track machine selection
+if 'selected_machine' not in st.session_state: st.session_state.selected_machine = "Tractor"
 
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/en/5/52/Indian_Institute_of_Technology_Patna_Logo.png", width=120)
@@ -177,7 +179,29 @@ elif tab == "🛡️ Pest & Fertilizer":
 elif tab == "🚜 Rental Hub":
     # --- MEMBER 4: THE OPERATOR LOGIC ---
     st.title(f"🚜 Rental Machinery Desk: {dt_loc}")
-    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding tractor owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
+    
+    # --- MACHINE SELECTION MATRIX (MEMBER 4 INTEGRATION) ---
+    st.subheader("1. Tap to Select Your Machine")
+    machine_types = {
+        "Preparation": [("Rotavator", "🚜"), ("Power Tiller", "⚙️"), ("Land Leveler", "📏")],
+        "Sowing": [("Seed Drill", "🌱"), ("Rice Transplanter", "🌾"), ("Potato Planter", "🥔")],
+        "Protection": [("Spraying Drone", "🚁"), ("Power Sprayer", "💨"), ("Boom Sprayer", "🚿")],
+        "Harvesting": [("Combine Harvester", "🌾✨"), ("Thresher", "🌪️"), ("Baler", "📦")]
+    }
+    
+    m_tabs = st.tabs(list(machine_types.keys()))
+    for i, category in enumerate(machine_types.keys()):
+        with m_tabs[i]:
+            m_cols = st.columns(3)
+            for idx, (m_name, m_icon) in enumerate(machine_types[category]):
+                with m_cols[idx % 3]:
+                    if st.button(f"{m_icon} {m_name}", key=f"rent_{m_name}"):
+                        st.session_state.selected_machine = m_name
+
+    st.markdown(f"**Currently Finding:** <span class='highlight-text'>{st.session_state.selected_machine}</span>", unsafe_allow_html=True)
+    st.markdown("---")
+
+    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding {st.session_state.selected_machine} owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
 
     # Local Directory Database
     local_data = {
@@ -214,13 +238,14 @@ elif tab == "🚜 Rental Hub":
     st.subheader("🌐 Global Search (Google Maps Bridge)")
     
     # Corrected Google Maps Search URL
-    search_query = f"Tractor+Rental+in+{dt_loc}+{st_loc}"
-    google_url = f"https://www.google.com/maps/search/{search_query}"
+    # Updated to include the selected machine dynamically
+    search_query = f"{st.session_state.selected_machine}+Rental+in+{dt_loc}+{st_loc}"
+    google_url = f"https://www.google.com/search?q={search_query}"
     
-    st.info(f"scanning Google Maps for commercial centers in {dt_loc}.")
+    st.info(f"scanning Google Maps for commercial {st.session_state.selected_machine} centers in {dt_loc}.")
     
     # Member 4's Fixed Search Button
-    st.link_button(f"🔍 Search Commercial Centers in {dt_loc}", google_url, use_container_width=True)
+    st.link_button(f"🔍 Search Commercial {st.session_state.selected_machine} Centers", google_url, use_container_width=True)
 
     with st.expander("🆘 Need Government Help?"):
         st.markdown(f"""
