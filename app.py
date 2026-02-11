@@ -179,7 +179,7 @@ elif tab == "🚜 Rental Hub":
     search_query = f"Tractor+Rental+in+{dt_loc}+{st_loc}"
     google_url = f"https://www.google.com/maps/search/{search_query}"
     
-    st.info(f"Member 4 is scanning Google Maps for commercial centers in {dt_loc}.")
+    st.info(f"scanning Google Maps for commercial centers in {dt_loc}.")
     
     # Member 4's Fixed Search Button
     st.link_button(f"🔍 Search Commercial Centers in {dt_loc}", google_url, use_container_width=True)
