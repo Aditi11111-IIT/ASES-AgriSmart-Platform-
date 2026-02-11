@@ -5,7 +5,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
 import requests
 from fpdf import FPDF
-import webbrowser
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="ASES: Agri-Smart", layout="wide", page_icon="🌾")
@@ -26,14 +25,9 @@ st.markdown("""
     }
     [data-testid="stSidebar"] { background-color: #243139 !important; }
     [data-testid="stSidebar"] * { color: #ffffff !important; }
-    .stButton>button {
-        background-color: #2481CC; color: white !important;
-        border-radius: 8px; font-weight: 600; width: 100%; border: none;
-    }
     .highlight-text { color: #2481CC !important; font-weight: bold; }
-    .stMarkdown p { font-weight: 500; }
     
-    /* MEMBER 4: Green Button Styling */
+    /* MEMBER 4: Green Button Styling for Call Links */
     .call-btn {
         background-color: #28a745 !important;
         color: white !important;
@@ -91,7 +85,7 @@ with st.sidebar:
             res = requests.get(w_url).json()
             st.session_state.temp, st.session_state.hum = res['main']['temp'], res['main']['humidity']
             st.success("Weather Synced!")
-        except: st.error("API Link Error")
+        except: st.error("Weather API Error")
 
 # --- 5. TABS LOGIC ---
 
@@ -145,9 +139,9 @@ elif tab == "🛡️ Pest & Fertilizer":
 elif tab == "🚜 Rental Hub":
     # --- MEMBER 4: THE OPERATOR LOGIC ---
     st.title(f"🚜 Rental Machinery Desk: {dt_loc}")
-    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding tractor and machinery owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="main-card"><h3>Operator Desk:</h3><p>Finding tractor owners near <b>{dt_loc}, {st_loc}</b>.</p></div>', unsafe_allow_html=True)
 
-    # Local Directory Database (Member 4's Phone Directory)
+    # Local Directory Database
     local_data = {
         "Patna": [
             {"Machine": "Mahindra 575 DI", "Owner": "Suresh Kumar", "Rate": "₹800/hr", "Contact": "9876543210"},
@@ -180,15 +174,18 @@ elif tab == "🚜 Rental Hub":
 
     st.markdown("---")
     st.subheader("🌐 Global Search (Google Maps Bridge)")
-    # Member 4's Deep Link to Google Maps for ANY location in India
-    google_url = f"https://www.google.com/maps/search/Tractor+Rental+in+{dt_loc}+{st_loc}"
     
-    st.info("Member 4 can scan Google Maps for commercial rental centers in your area.")
-    if st.button("🔍 Search Commercial Centers Near Me"):
-        webbrowser.open_new_tab(google_url)
+    # Corrected Google Maps Search URL
+    search_query = f"Tractor+Rental+in+{dt_loc}+{st_loc}"
+    google_url = f"https://www.google.com/maps/search/{search_query}"
+    
+    st.info(f"Member 4 is scanning Google Maps for commercial centers in {dt_loc}.")
+    
+    # Member 4's Fixed Search Button
+    st.link_button(f"🔍 Search Commercial Centers in {dt_loc}", google_url, use_container_width=True)
 
     with st.expander("🆘 Need Government Help?"):
-        st.markdown("""
+        st.markdown(f"""
             <a href="tel:18001801551" class="call-btn" style="background-color:#ffc107 !important; color:black !important;">
                 📞 Call Govt CHC Helpline (1800-180-1551)
             </a>
